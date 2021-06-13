@@ -1,0 +1,95 @@
+function moveOldMessages()
+	for _, old in pairs(script.Parent:GetChildren()) do
+		if old:IsA("TextLabel") and old.Name:sub(1, 4) == "Line" then
+			old.Position = old.Position + UDim2.new(0, 0, 0, -19)
+			local oldName = old.Name
+			old.Name = "Line" .. 1 + tonumber(string.sub(oldName, 5))
+			if old.Name == "Line37" then
+				old:Destroy()
+			end
+		end
+	end
+end
+function message(playerName, theMessage, color1, color2, xValue, teamLabel)
+	local name = Instance.new("TextLabel", script.Parent)
+	name.Name = "Line1"
+	name.BackgroundTransparency = 1
+	name.BorderSizePixel = 0
+	name.ClipsDescendants = false
+	name.TextScaled = false
+	name.TextColor3 = color1
+	name.TextStrokeColor3 = Color3.new(0, 0, 0)
+	name.TextStrokeTransparency = name.TextTransparency
+	name.TextWrapped = false
+	name.Font = "SourceSansBold"
+	name.TextSize = 18
+	name.TextXAlignment = "Left"
+	name.Size = UDim2.new(590, 0, 36, 0)
+	name.Text = playerName
+	pcall(function()
+		if game.Players:FindFirstChild(playerName):FindFirstChild("IsAdmin") then
+			name.Text = "[\240\159\155\160]" .. name.Text
+		elseif game.PLayers:FindFirstChild(playerName):FindFirstChild("IsChad") then
+			name.Text = "\240\159\152\142" .. name.Text
+		elseif game.Players:FindFirstChild(playerName):FindFirstChild("VIP") then
+			name.Text = "[\240\159\145\145]" .. name.Text
+		end
+	end)
+	sampleName.Text = name.Text
+	local nameLength = sampleName.TextBounds.X + 1
+	name.Size = UDim2.new(0, nameLength, 0, 36)
+	name.Position = UDim2.new(xValue, 0, 0, 147)
+	local playerMessage = Instance.new("TextLabel", script.Parent)
+	playerMessage.Name = "Line1"
+	playerMessage.BackgroundTransparency = 1
+	playerMessage.BorderSizePixel = 0
+	playerMessage.Active = false
+	playerMessage.ClipsDescendants = false
+	playerMessage.TextScaled = false
+	playerMessage.TextWrapped = false
+	local before = name.TextBounds.X
+	if teamLabel then
+		before = before + teamLabel.TextBounds.X
+	end
+	playerMessage.Size = UDim2.new(0, 493 - before, 0, 36)
+	playerMessage.Position = name.Position + UDim2.new(0, nameLength, 0, 0)
+	playerMessage.TextColor3 = color2
+	playerMessage.TextStrokeColor3 = Color3.new(0, 0, 0)
+	playerMessage.TextStrokeTransparency = playerMessage.TextTransparency
+	playerMessage.Font = "SourceSans"
+	playerMessage.TextSize = 18
+	playerMessage.TextXAlignment = "Left"
+	playerMessage.Text = ": " .. theMessage
+	if playerMessage.TextBounds.X <= 487 - before and 18 >= playerMessage.TextBounds.Y then
+		numMessages = numMessages + 1
+	else
+		moveOldMessages()
+		if not string.find(theMessage, " ") then
+			local b4 = string.sub(theMessage, 1, math.ceil(string.len(theMessage) / 3))
+			local after = string.sub(theMessage, math.ceil(string.len(theMessage) / 3) + 1)
+			playerMessage.Text = ": " .. b4 .. "  " .. after
+		end
+		playerMessage.Size = UDim2.new(0, 493 - before, 0, 36)
+		playerMessage.Position = playerMessage.Position + UDim2.new(0, 0, 0, 8)
+		playerMessage.TextYAlignment = "Top"
+		numMessages = numMessages + 2
+	end
+	playerMessage.TextWrapped = true
+	if game.Players:FindFirstChild(playerName) and game.Players:FindFirstChild(playerName):FindFirstChild("VIP") then
+		colors:GetPropertyChangedSignal("Value"):connect(function()
+			if playerMessage and playerMessage.Parent then
+				playerMessage.TextColor3 = colors.Value
+				playerMessage.TextStrokeColor3 = Color3.new(colors.Value.r - 75, colors.Value.g - 75, colors.Value.b - 75)
+			end
+		end)
+	end
+	if numMessages < 36 then
+		script.Parent.CanvasSize = UDim2.new(0, 0, 0, round(numMessages * 19.77))
+	else
+		script.Parent.CanvasSize = UDim2.new(0, 0, 0, 693)
+	end
+	if numMessages > 9 then
+		adjustPositions()
+		script.Parent.CanvasPosition = Vector2.new(0, script.Parent.CanvasSize.Y.Offset - 178)
+	end
+end
