@@ -1,4 +1,18 @@
-local sampleName = game.Players.LocalPlayer.PlayerGui.GUI.Main.Chats:WaitForChild("SampleName")
+--SynapseX Decompiler
+
+wait()
+local MarketplaceService = game:GetService("MarketplaceService")
+wkspc = game.ReplicatedStorage.wkspc
+local player = game.Players.LocalPlayer
+if not game:GetService("Chat"):CanUserChatAsync(player.userId) then
+	return
+end
+local sp = script.Parent
+local numMessages = 0
+local rs = game:GetService("RunService")
+local isStudio = rs:IsStudio()
+local sampleName = script.Parent:WaitForChild("SampleName")
+local sampleNotification = script.Parent:WaitForChild("SampleNotification")
 function moveOldMessages()
 	for _, old in pairs(script.Parent:GetChildren()) do
 		if old:IsA("TextLabel") and old.Name:sub(1, 4) == "Line" then
@@ -11,7 +25,45 @@ function moveOldMessages()
 		end
 	end
 end
-function message(playerName, theMessage, color1, color2, xValue, teamLabel)
+function adjustPositions()
+	for _, old in pairs(script.Parent:GetChildren()) do
+		if old:IsA("TextLabel") and old.Name:sub(1, 4) == "Line" then
+			if not old.Active then
+				old.Position = UDim2.new(old.Position.X.Scale, old.Position.X.Offset, old.Position.Y.Scale, script.Parent.CanvasSize.Y.Offset - 31 - tonumber(string.sub(old.Name, 5) - 1) * 19)
+			else
+				old.Position = UDim2.new(old.Position.X.Scale, old.Position.X.Offset, old.Position.Y.Scale, script.Parent.CanvasSize.Y.Offset - 31 - (tonumber(string.sub(old.Name, 5) - 1) * 19 - 8))
+			end
+		end
+	end
+end
+function fade(textLabel)
+	wait(15)
+	for i = 0, 1, 0.1 do
+		if script.Parent.Parent:WaitForChild("GlobalChat").Visible or script.Parent.Parent:WaitForChild("TeamChat").Visible == true then
+			textLabel.TextTransparency = 0
+			textLabel.TextStrokeTransparency = textLabel.TextTransparency
+			repeat
+				wait()
+			until script.Parent.BackgroundTransparency == 1
+		end
+		textLabel.TextTransparency = i
+		textLabel.TextStrokeTransparency = textLabel.TextTransparency
+		wait(0.1)
+	end
+end
+function round(num)
+	return math.floor(num + 0.5)
+end
+local colors = Instance.new("Color3Value")
+local mycwrap
+local tickTimer = 10
+mycwrap = coroutine.wrap(function()
+	while wait() do
+		colors.Value = Color3.fromHSV(tick() % tickTimer / tickTimer, 1, 1)
+	end
+	coroutine.yield(mycwrap)
+end)()
+function createNewMessage(playerName, theMessage, color1, color2, xValue, teamLabel)
 	local name = Instance.new("TextLabel", script.Parent)
 	name.Name = "Line1"
 	name.BackgroundTransparency = 1
@@ -94,3 +146,166 @@ function message(playerName, theMessage, color1, color2, xValue, teamLabel)
 		script.Parent.CanvasPosition = Vector2.new(0, script.Parent.CanvasSize.Y.Offset - 178)
 	end
 end
+local preparation = wkspc.Status.Preparation
+local roundOver = wkspc.Status.RoundOver
+game.ReplicatedStorage.Events.reward.OnClientEvent:connect(function(message)
+	moveOldMessages()
+	createNewMessage("Server", message, BrickColor.new("New Yeller").Color, BrickColor.new("New Yeller").Color, 0.01, nil)
+end)
+game.ReplicatedStorage.Events.PlayerChatted.OnClientEvent:connect(function(name, message, team, role, dead, filter, qc)
+	if not isStudio then
+		message = game.ReplicatedStorage.Functions.Filter:InvokeServer(message, game.Players:FindFirstChild(name))
+	end
+	local plr = game.Players[name]
+	local color
+	if plr and plr.NRPBS and plr.NRPBS.Health.Value <= 0 then
+		dead = true
+	end
+	if plr and plr.Status.Team.Value == "TRC" then
+		color = BrickColor.new("Bright red")
+	elseif plr and plr.Status.Team.Value == "TBC" then
+		color = BrickColor.new("Bright blue")
+	elseif plr and plr.Status.Team.Value == "TPC" then
+		color = BrickColor.new("Bright violet")
+	elseif plr and plr.Status.Team.Value == "TGC" then
+		color = BrickColor.new("Bright green")
+	elseif plr and plr.Status.Team.Value == "TYC" then
+		color = BrickColor.new("Bright yellow")
+	else
+		color = BrickColor.new("White")
+	end
+	if wkspc.gametype.Value == "Free For All" then
+		color = plr.DesignColor.Value
+	end
+	color = color.Color
+	if not team then
+		if player.Status.Team.Value ~= "Spectator" then
+			local plyrAlive = plr:WaitForChild("Status"):WaitForChild("Alive").Value
+			if plyrAlive and qc then
+				local additionaltext = ""
+				return
+			end
+			if not dead then
+				moveOldMessages()
+				if script.Parent.Parent.Visible then
+					createNewMessage(name, message, color, Color3.new(255, 255, 255), 0.01, nil)
+				end
+			else
+				local Player = game.Players.LocalPlayer
+				moveOldMessages()
+				local deadLabel = Instance.new("TextLabel", script.Parent)
+				deadLabel.Name = "Line1"
+				deadLabel.BackgroundTransparency = 1
+				deadLabel.BorderSizePixel = 0
+				deadLabel.Size = UDim2.new(0, 590, 0, 36)
+				deadLabel.Position = UDim2.new(0.01, 0, 0, 147)
+				deadLabel.TextColor3 = script.Parent.DeadColor.Value
+				deadLabel.TextStrokeColor3 = Color3.new(0, 0, 0)
+				deadLabel.TextStrokeTransparency = deadLabel.TextTransparency
+				deadLabel.TextWrapped = false
+				deadLabel.Font = "SourceSansBold"
+				deadLabel.TextSize = 18
+				deadLabel.TextXAlignment = "Left"
+				deadLabel.Text = "*DEAD*"
+				deadLabel.Size = UDim2.new(0, deadLabel.TextBounds.X + 1, 0, 36)
+				createNewMessage(name, message, color, Color3.new(255, 255, 255), 0.114, deadLabel)
+			end
+		elseif plr.Status.Team.Value == "Spectator" then
+			local Player = game.Players.LocalPlayer
+			if plr.Name == Player.Name or plr.Name == "DevRolve" or preparation.Value or roundOver.Value or Player.Status.Team.Value == "Spectator" then
+				moveOldMessages()
+				local spectatorLabel = Instance.new("TextLabel", script.Parent)
+				spectatorLabel.Name = "Line1"
+				spectatorLabel.BackgroundTransparency = 1
+				spectatorLabel.BorderSizePixel = 0
+				spectatorLabel.Size = UDim2.new(0, 590, 0, 36)
+				spectatorLabel.Position = UDim2.new(0.01, 0, 0, 147)
+				spectatorLabel.TextColor3 = script.Parent.SpectatorColor.Value
+				spectatorLabel.TextStrokeColor3 = Color3.new(0, 0, 0)
+				spectatorLabel.TextStrokeTransparency = spectatorLabel.TextTransparency
+				spectatorLabel.TextWrapped = false
+				spectatorLabel.Font = "SourceSansBold"
+				spectatorLabel.TextSize = 18
+				spectatorLabel.TextXAlignment = "Left"
+				spectatorLabel.Text = "(SPECTATOR)"
+				spectatorLabel.Size = UDim2.new(0, spectatorLabel.TextBounds.X + 1, 0, 36)
+				createNewMessage(name, message, color, Color3.new(255, 255, 255), 0.189, spectatorLabel)
+			end
+		end
+	elseif plr.Status.Team.Value == player.Status.Team.Value then
+		moveOldMessages()
+		local teamLabel = Instance.new("TextLabel", script.Parent)
+		teamLabel.Name = "Line1"
+		teamLabel.BackgroundTransparency = 1
+		teamLabel.BorderSizePixel = 0
+		teamLabel.Size = UDim2.new(0, 590, 0, 36)
+		teamLabel.Position = UDim2.new(0.01, 0, 0, 147)
+		teamLabel.TextColor3 = script.Parent.TeamValueColor.Value
+		teamLabel.TextStrokeColor3 = Color3.new(0, 0, 0)
+		teamLabel.TextStrokeTransparency = teamLabel.TextTransparency
+		teamLabel.TextWrapped = false
+		teamLabel.Font = "SourceSansBold"
+		teamLabel.TextSize = 18
+		teamLabel.TextXAlignment = "Left"
+		teamLabel.Text = "(TEAM)"
+		teamLabel.Size = UDim2.new(0, teamLabel.TextBounds.X + 1, 0, 36)
+		createNewMessage(name, message, color, Color3.new(255, 255, 255), 0.108, teamLabel)
+	end
+end)
+function Chat2(val, color)
+	if val ~= "" then
+		moveOldMessages()
+		local notification = Instance.new("TextLabel", script.Parent)
+		notification.Name = "Line1"
+		notification.BackgroundTransparency = 1
+		notification.BorderSizePixel = 0
+		notification.Size = UDim2.new(0, 590, 0, 36)
+		notification.Position = UDim2.new(0.01, 0, 0, 147)
+		notification.TextColor3 = color
+		notification.TextStrokeColor3 = Color3.new(0, 0, 0)
+		notification.TextStrokeTransparency = notification.TextTransparency
+		notification.TextWrapped = false
+		notification.Font = "SourceSansBold"
+		notification.TextSize = 18
+		notification.TextXAlignment = "Left"
+		notification.Text = val
+		numMessages = numMessages + 1
+		if numMessages < 36 then
+			script.Parent.CanvasSize = UDim2.new(0, 0, 0, round(numMessages * 19.77))
+		else
+			script.Parent.CanvasSize = UDim2.new(0, 0, 0, 693)
+		end
+		if numMessages > 9 then
+			adjustPositions()
+			script.Parent.CanvasPosition = Vector2.new(0, script.Parent.CanvasSize.Y.Offset - 178)
+		end
+	end
+end
+wkspc:WaitForChild("Status"):WaitForChild("PlayerEntered").Changed:connect(function(val)
+	if val ~= "" then
+		if val.Name == "DevRolve" then
+			return
+		end
+		Chat2(val .. " has joined the server.", Color3.new(0.5058823529411764, 0.7568627450980392, 0.7568627450980392))
+	end
+end)
+wkspc:WaitForChild("Status"):WaitForChild("PlayerLeft").Changed:connect(function(val)
+	if val ~= "" and wkspc.ServerShutdown.Value == false then
+		if val.Name == "DevRolve" then
+			return
+		end
+		Chat2(val .. " has left the server.", Color3.new(0.5058823529411764, 0.7568627450980392, 0.7568627450980392))
+	end
+end)
+script.Parent.DescendantAdded:connect(function(child)
+	if child:IsA("TextLabel") and not child.Active then
+		rs.Heartbeat:wait()
+		fade(child)
+	end
+end)
+game.ReplicatedStorage.Events.SendMsg.OnClientEvent:connect(function(val, color)
+	if color == nil then
+		color = Color3.new(1, 1, 1)
+	end
+	Chat2(val, color)
+end)
