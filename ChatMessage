@@ -7,12 +7,11 @@ local player = game.Players.LocalPlayer
 if not game:GetService("Chat"):CanUserChatAsync(player.userId) then
 	return
 end
-local sp = script.Parent
 local numMessages = 0
 local rs = game:GetService("RunService")
 local isStudio = rs:IsStudio()
-local sampleName = script.Parent:WaitForChild("SampleName")
-local sampleNotification = script.Parent:WaitForChild("SampleNotification")
+local sampleName = game.Players.LocalPlayer.PlayerGui.GUI.Main.Chats:WaitForChild("SampleName")
+local sampleNotification = game.Players.LocalPlayer.PlayerGui.GUI.Main.Chats:WaitForChild("SampleNotification")
 function moveOldMessages()
 	for _, old in pairs(script.Parent:GetChildren()) do
 		if old:IsA("TextLabel") and old.Name:sub(1, 4) == "Line" then
